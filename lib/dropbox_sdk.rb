@@ -20,7 +20,7 @@ module Dropbox # :nodoc:
     :web => WEB_SERVER
   }
 
-  API_VERSION = 1
+  API_VERSION = 2
   SDK_VERSION = "1.6.5"
 
   TRUSTED_CERT_FILE = File.join(File.dirname(__FILE__), 'trusted-certs.crt')
@@ -221,7 +221,7 @@ class DropboxSessionBase # :nodoc:
     params ||= {}
     assert_authorized
     uri = build_url_with_params(path, params, server)
-    do_http_with_body(uri, Net::HTTP::Put.new(uri.request_uri, headers), body)
+    do_http_with_body(uri, Net::HTTP::Post.new(uri.request_uri, headers), body)
   end
 end
 
@@ -243,16 +243,7 @@ class DropboxSession < DropboxSessionBase  # :nodoc:
   private
 
   def build_auth_header(token) # :nodoc:
-    header = "OAuth oauth_version=\"1.0\", oauth_signature_method=\"PLAINTEXT\", " +
-      "oauth_consumer_key=\"#{URI.escape(@consumer_key)}\", "
-    if token
-      key = URI.escape(token.key)
-      secret = URI.escape(token.secret)
-      header += "oauth_token=\"#{key}\", oauth_signature=\"#{URI.escape(@consumer_secret)}&#{secret}\""
-    else
-      header += "oauth_signature=\"#{URI.escape(@consumer_secret)}&\""
-    end
-    header
+    "Bearer " + token.key
   end
 
   def do_get_with_token(url, token) # :nodoc:
@@ -813,13 +804,13 @@ class DropboxClient
   # and call it "test_file_on_dropbox".
   # The file will not overwrite any pre-existing file.
   def put_file(to_path, file_obj, overwrite=false, parent_rev=nil)
-    path = "/files_put/#{@root}#{format_path(to_path)}"
-    params = {
-      'overwrite' => overwrite.to_s,
-      'parent_rev' => parent_rev,
-    }
+    path = "/files/upload"
+    params = {}
 
-    headers = {"Content-Type" => "application/octet-stream"}
+    headers = {"Content-Type" => "application/octet-stream",
+               'Dropbox-API-Arg' => {'path' => to_path, "mode" => "add",
+              "autorename" => true,
+              "mute" => false}.to_json}
     response = @session.do_put path, params, headers, file_obj, :content
 
     Dropbox::parse_response(response)
