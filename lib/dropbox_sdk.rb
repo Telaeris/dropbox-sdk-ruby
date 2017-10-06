@@ -1100,16 +1100,15 @@ class DropboxClient
   #   appropriate).  For a detailed description of what this call returns, visit:
   #   https://www.dropbox.com/developers/reference/api#metadata
   def metadata(path, file_limit=25000, list=true, hash=nil, rev=nil, include_deleted=false, include_media_info=false)
+    metadata_path = "/files/get_metadata"
     params = {
-      "file_limit" => file_limit.to_s,
-      "list" => list.to_s,
-      "include_deleted" => include_deleted.to_s,
-      "hash" => hash,
-      "rev" => rev,
-      "include_media_info" => include_media_info
+      'path' => path,
+      'include_media_info' => include_media_info,
+      'include_has_explicit_shared_members' => false
     }
+    headers = {"Content-Type" => "application/json"}
 
-    response = @session.do_get "/metadata/#{@root}#{format_path(path)}", params
+    response = @session.do_put metadata_path, params, headers
     if response.kind_of? Net::HTTPRedirection
       raise DropboxNotModified.new("metadata not modified")
     end
