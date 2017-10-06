@@ -223,6 +223,14 @@ class DropboxSessionBase # :nodoc:
     uri = build_url_with_params(path, params, server)
     do_http_with_body(uri, Net::HTTP::Post.new(uri.request_uri, headers), body)
   end
+
+  def do_post_for_url(path, params)
+    headers = {'Content-Type' => 'application/json'}
+    assert_authorized
+    uri = build_url(path, :api)
+    # params['locale'] = @locale
+    do_http_with_body(uri, Net::HTTP::Post.new(uri.request_uri, headers), params)
+  end
 end
 
 # DropboxSession is responsible for holding OAuth 1 information.  It knows how to take your consumer key and secret
@@ -1194,8 +1202,9 @@ class DropboxClient
   # * A Hash object that looks like the following:
   #      {'url': 'https://dl.dropboxusercontent.com/1/view/abcdefghijk/example', 'expires': 'Thu, 16 Sep 2011 01:01:25 +0000'}
   def media(path)
-    response = @session.do_get "/media/#{@root}#{format_path(path)}"
-    Dropbox::parse_response(response)
+    response = @session.do_post_for_url("/files/get_temporary_link", {'path' => format_path(path)}.to_json)
+
+    {'url' => Dropbox::parse_response(response)["link"]}
   end
 
   # Get a URL to share a media file
