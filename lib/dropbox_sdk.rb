@@ -1055,10 +1055,9 @@ class DropboxClient
   #    https://www.dropbox.com/developers/reference/api#fileops-delete
   def file_delete(path)
     params = {
-      "root" => @root,
       "path" => format_path(path, false),
     }
-    response = @session.do_post "/fileops/delete", params
+    response = @session.do_post_for_url("/files/delete", params.to_json)
     Dropbox::parse_response(response)
   end
 
@@ -1075,11 +1074,13 @@ class DropboxClient
   #    https://www.dropbox.com/developers/reference/api#fileops-delete
   def file_move(from_path, to_path)
     params = {
-      "root" => @root,
       "from_path" => format_path(from_path, false),
       "to_path" => format_path(to_path, false),
+      "allow_shared_folder" => false,
+      "autorename" => false,
+      "allow_ownership_transfer" => false
     }
-    response = @session.do_post "/fileops/move", params
+    response = @session.do_post_for_url "/files/move", params.to_json
     Dropbox::parse_response(response)
   end
 
@@ -1114,9 +1115,8 @@ class DropboxClient
       'include_media_info' => include_media_info,
       'include_has_explicit_shared_members' => false
     }
-    headers = {"Content-Type" => "application/json"}
-
-    response = @session.do_put metadata_path, params, headers
+    response = @session.do_post_for_url(metadata_path, params.to_json)
+  
     if response.kind_of? Net::HTTPRedirection
       raise DropboxNotModified.new("metadata not modified")
     end
