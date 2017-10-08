@@ -1111,7 +1111,7 @@ class DropboxClient
   def metadata(path, file_limit=25000, list=true, hash=nil, rev=nil, include_deleted=false, include_media_info=false)
     metadata_path = "/files/get_metadata"
     params = {
-      'path' => path,
+      'path' => format_path(path),
       'include_media_info' => include_media_info,
       'include_has_explicit_shared_members' => false
     }
