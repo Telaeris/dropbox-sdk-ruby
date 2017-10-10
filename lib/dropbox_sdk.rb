@@ -1055,7 +1055,7 @@ class DropboxClient
   #    https://www.dropbox.com/developers/reference/api#fileops-delete
   def file_delete(path)
     params = {
-      "path" => format_path(path, false),
+      "path" => format_path_ensure_forward_slash(path),
     }
     response = @session.do_post_for_url("/files/delete", params.to_json)
     Dropbox::parse_response(response)
@@ -1111,7 +1111,7 @@ class DropboxClient
   def metadata(path, file_limit=25000, list=true, hash=nil, rev=nil, include_deleted=false, include_media_info=false)
     metadata_path = "/files/get_metadata"
     params = {
-      'path' => format_path(path),
+      'path' => format_path_ensure_forward_slash(path),
       'include_media_info' => include_media_info,
       'include_has_explicit_shared_members' => false
     }
@@ -1202,7 +1202,7 @@ class DropboxClient
   # * A Hash object that looks like the following:
   #      {'url': 'https://dl.dropboxusercontent.com/1/view/abcdefghijk/example', 'expires': 'Thu, 16 Sep 2011 01:01:25 +0000'}
   def media(path)
-    response = @session.do_post_for_url("/files/get_temporary_link", {'path' => format_path(path)}.to_json)
+    response = @session.do_post_for_url("/files/get_temporary_link", {'path' => format_path_ensure_forward_slash(path)}.to_json)
 
     {'url' => Dropbox::parse_response(response)["link"]}
   end
@@ -1488,4 +1488,13 @@ class DropboxClient
     path
   end
 
+  def format_path_ensure_forward_slash(path)
+    path = path.gsub(/\/+/,"/")
+    # replace multiple slashes with a single one
+
+    path = path.gsub(/^\/?/,"/")
+    # ensure the path starts with a slash
+
+    path
+  end
 end
